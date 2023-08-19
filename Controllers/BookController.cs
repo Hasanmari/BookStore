@@ -71,7 +71,7 @@ namespace BookStore.Controllers
         public ActionResult Edit(int id)
         {
             var book = bookRepository.Find(id); // Get the book with the specified ID
-            
+
             ViewBag.AuthorsList = new SelectList(AuthorsDropdownList(), "Id", "FullName", book?.Author?.Id);
             return View(book);
         }
