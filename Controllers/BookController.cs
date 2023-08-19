@@ -62,7 +62,7 @@ namespace BookStore.Controllers
                 bookRepository.Add(Newbook);
                 return RedirectToAction(nameof(Index));
             }
-
+            ModelState.AddModelError("", "Please fill all the required fields.");
             ViewBag.AuthorsList = new SelectList(AuthorsDropdownList(), "Id", "FullName", book?.Author?.Id);  // Repopulate dropdown
             return View(book);
         }

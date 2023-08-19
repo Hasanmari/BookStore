@@ -27,7 +27,8 @@
 			};
 		}
 		public void Add(Author entity)
-		{
+		{ 
+			entity.Id = authors.Max(A => A.Id) + 1;
 			authors.Add(entity);
 		}
 
