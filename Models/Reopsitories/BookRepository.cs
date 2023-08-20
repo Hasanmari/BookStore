@@ -57,6 +57,8 @@
             book.Title = NewBook.Title;
             book.Description = NewBook.Description;
             book.Author = NewBook.Author;
+            book.BookImagePath = NewBook.BookImagePath;  // Update the image path
+            book.BookFilePath = NewBook.BookFilePath;    // Update the file path
         }
     }
 }

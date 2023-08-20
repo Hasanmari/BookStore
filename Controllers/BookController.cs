@@ -89,9 +89,9 @@ namespace BookStore.Controllers
 
         // POST: BookController/Edit/5
         [HttpPost]
-        [Route("Book/Edit/{id}")] // to avoid the error "The current request for action 'Edit' on controller type 'BookController' is ambiguous between the following action methods"
+        [Route("Book/Edit/{id}")]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, Book editedBook)
+        public async Task<IActionResult> EditAsync(int id, Book editedBook, IFormFile newImage, IFormFile newFile)
         {
             try
             {
@@ -99,11 +99,9 @@ namespace BookStore.Controllers
 
                 if (existingBook == null)
                 {
-                    return NotFound(); // Or you can return a view with an error message
+                    return NotFound();
                 }
 
-                // Since Author is an object, it might be only partially filled in (maybe just the ID).
-                // To avoid null or incomplete data, fetch the full author object from the repository.
                 if (editedBook.Author != null && editedBook.Author.Id > 0)
                 {
                     var author = autohrRepository.Find(editedBook.Author.Id);
@@ -113,13 +111,45 @@ namespace BookStore.Controllers
                     }
                 }
 
-                bookRepository.Update(id, editedBook);
+                // Handle new image upload
+                if (newImage != null)
+                {
+                    // Delete the old image
+                    System.IO.File.Delete(existingBook.BookImagePath);
 
+                    // Upload the new image and update the BookImagePath property
+                    string bookFolder = Path.GetDirectoryName(existingBook.BookImagePath);
+                    editedBook.BookImagePath = await UploadFile(newImage, bookFolder, "BookImage");
+                }
+
+                // Handle new file upload
+                if (newFile != null)
+                {
+                    // Delete the old file
+                    System.IO.File.Delete(existingBook.BookFilePath);
+
+                    // Upload the new file and update the BookFilePath property
+                    string bookFolder = Path.GetDirectoryName(existingBook.BookFilePath);
+                    editedBook.BookFilePath = await UploadFile(newFile, bookFolder, "BookFiles");
+                }
+
+                existingBook.Title = editedBook.Title;
+                existingBook.Description = editedBook.Description;
+                existingBook.Author = editedBook.Author;
+
+                // Only update the paths if a new image or file has been uploaded.
+                if (newImage != null)
+                    existingBook.BookImagePath = editedBook.BookImagePath;
+
+                if (newFile != null)
+                    existingBook.BookFilePath = editedBook.BookFilePath;
+
+                // Update the existingBook object in the database.
+                bookRepository.Update(id, existingBook);
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
-                // If something goes wrong, repopulate the authors dropdown and return to the Edit view
                 var authors = autohrRepository.List();
                 ViewBag.AuthorsList = new SelectList(authors, "Id", "FullName", editedBook.Author?.Id);
                 return View(editedBook);
@@ -144,7 +174,22 @@ namespace BookStore.Controllers
         {
             try
             {
-                bookRepository.Delete(id);
+                var book = bookRepository.Find(id);
+
+                if (book != null)
+                {
+                    // Get the directory path of the book's files
+                    string bookDirectory = Path.GetDirectoryName(book.BookFilePath);
+
+                    // Delete the directory and its content
+                    if (Directory.Exists(bookDirectory))
+                    {
+                        Directory.Delete(bookDirectory, true);  // The second parameter (true) means it will delete subdirectories and files
+                    }
+
+                    bookRepository.Delete(id);
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             catch
@@ -180,7 +225,7 @@ namespace BookStore.Controllers
             return bookFolder;
         }
 
-        // This method is used to upload the book file and book image
+        // This method is used to upload the book file and book image and give them uniqe names
         private async Task<string> UploadFile(IFormFile file, string parentFolder, string subFolder)
         {
             if (file != null && file.Length > 0)
