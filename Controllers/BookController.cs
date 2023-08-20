@@ -2,6 +2,8 @@
 using BookStore.Models.Reopsitories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace BookStore.Controllers
 {
@@ -42,28 +44,37 @@ namespace BookStore.Controllers
         // POST: BookController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Book book)
+        public async Task<IActionResult> CreateAsync(Book book)
         {
-            if (book.Author == null || book.Author.Id == -1) // checking the default value
-            {
-                ModelState.AddModelError("Author.Id", "Please select an author.");
-            }
+            HandleAuthorSelection(book);
 
             if (ModelState.IsValid)
             {
-                var author = autohrRepository.Find(book.Author.Id); // Get the author with the specified ID
+                string bookFolder = CreateBookDirectory(book.Title);
+
+                book.BookFilePath = await UploadFile(book.BookFile, bookFolder, "BookFiles");
+                book.BookImagePath = await UploadFile(book.BookImage, bookFolder, "BookImage");
+
+                var author = autohrRepository.Find(book.Author.Id);
+
                 Book Newbook = new Book
                 {
                     Id = book.Id,
                     Title = book.Title,
                     Description = book.Description,
-                    Author = author
+                    Author = author,
+                    BookImagePath = book.BookImagePath,
+                    BookFilePath = book.BookFilePath
                 };
+
                 bookRepository.Add(Newbook);
+
                 return RedirectToAction(nameof(Index));
             }
+
             ModelState.AddModelError("", "Please fill all the required fields.");
-            ViewBag.AuthorsList = new SelectList(AuthorsDropdownList(), "Id", "FullName", book?.Author?.Id);  // Repopulate dropdown
+            ViewBag.AuthorsList = new SelectList(AuthorsDropdownList(), "Id", "FullName", book?.Author?.Id);
+
             return View(book);
         }
 
@@ -75,7 +86,6 @@ namespace BookStore.Controllers
             ViewBag.AuthorsList = new SelectList(AuthorsDropdownList(), "Id", "FullName", book?.Author?.Id);
             return View(book);
         }
-
 
         // POST: BookController/Edit/5
         [HttpPost]
@@ -143,11 +153,52 @@ namespace BookStore.Controllers
             }
         }
 
+        //=============Methods===============
+
+        // This method is used to populate the authors dropdown list
         private List<Author> AuthorsDropdownList()
         {
             var authors = autohrRepository.List().ToList();
             authors.Insert(0, new Author { Id = -1, FullName = "---Please Select Author---" });
             return authors;
+        }
+
+        // This method is used to validate the author selection
+        private void HandleAuthorSelection(Book book)
+        {
+            if (book.Author == null || book.Author.Id == -1)
+            {
+                ModelState.AddModelError("Author.Id", "Please select an author.");
+            }
+        }
+
+        // This method is used to create a directory for the book
+        private string CreateBookDirectory(string bookTitle)
+        {
+            var bookFolder = Path.Combine("uploads", bookTitle);
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", bookFolder));
+            return bookFolder;
+        }
+
+        // This method is used to upload the book file and book image
+        private async Task<string> UploadFile(IFormFile file, string parentFolder, string subFolder)
+        {
+            if (file != null && file.Length > 0)
+            {
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName); // use GUID to name the file
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", parentFolder, subFolder, fileName);
+
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath)); // ensure directory exists
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                return $"/{parentFolder}/{subFolder}/{fileName}";
+            }
+
+            return null;
         }
     }
 }
