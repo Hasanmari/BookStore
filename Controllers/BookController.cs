@@ -15,13 +15,13 @@ namespace BookStore.Controllers
 
         private readonly IBookStoreRepository<Author> autohrRepository;
 
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IWebHostEnvironment Hosting;
 
-        public BookController(IBookStoreRepository<Book> bookRepository, IBookStoreRepository<Author> autohrRepository, IWebHostEnvironment webHostEnvironment)
+        public BookController(IBookStoreRepository<Book> bookRepository, IBookStoreRepository<Author> autohrRepository, IWebHostEnvironment Hosting)
         {
             this.bookRepository = bookRepository;
             this.autohrRepository = autohrRepository;
-            _webHostEnvironment = webHostEnvironment;
+            this.Hosting = Hosting;
         }
 
         // GET: BookController
@@ -54,10 +54,9 @@ namespace BookStore.Controllers
 
             if (ModelState.IsValid)
             {
-                string bookFolder = CreateBookDirectory(book.Title);
-
-                book.BookFilePath = await UploadFile(book.BookFile, bookFolder, "BookFiles");
-                book.BookImagePath = await UploadFile(book.BookImage, bookFolder, "BookImage");
+                book.BookFolderPath = CreateBookDirectory(book.Title);
+                book.BookFilePath = await UploadFile(book.BookFile, book.BookFolderPath);
+                book.BookImagePath = await UploadFile(book.BookImage, book.BookFolderPath);
 
                 var author = autohrRepository.Find(book.Author.Id);
 
@@ -68,7 +67,8 @@ namespace BookStore.Controllers
                     Description = book.Description,
                     Author = author,
                     BookImagePath = book.BookImagePath,
-                    BookFilePath = book.BookFilePath
+                    BookFilePath = book.BookFilePath,
+                    BookFolderPath = book.BookFolderPath
                 };
 
                 bookRepository.Add(Newbook);
@@ -95,7 +95,7 @@ namespace BookStore.Controllers
         [HttpPost]
         [Route("Book/Edit/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditAsync(int id, Book editedBook, IFormFile newImage, IFormFile newFile)
+        public ActionResult Edit(int id, Book editedBook)
         {
             try
             {
@@ -106,45 +106,11 @@ namespace BookStore.Controllers
                     return NotFound();
                 }
 
-                if (editedBook.Author != null && editedBook.Author.Id > 0)
-                {
-                    var author = autohrRepository.Find(editedBook.Author.Id);
-                    if (author != null)
-                    {
-                        editedBook.Author = author;
-                    }
-                }
-
                 // Handle new image upload
-                if (newImage != null)
-                {
-                    delete_file(existingBook.BookImagePath);
-
-                    // Upload the new image and update the BookImagePath property
-                    string bookFolder = Path.GetDirectoryName(existingBook.BookImagePath);
-                    editedBook.BookImagePath = await UploadFile(newImage, bookFolder, "BookImage");
-                }
-
-                // Handle new file upload
-                if (newFile != null)
-                {
-                    delete_file(existingBook.BookFilePath);
-
-                    // Upload the new file and update the BookFilePath property
-                    string bookFolder = Path.GetDirectoryName(existingBook.BookFilePath);
-                    editedBook.BookFilePath = await UploadFile(newFile, bookFolder, "BookFiles");
-                }
 
                 existingBook.Title = editedBook.Title;
                 existingBook.Description = editedBook.Description;
                 existingBook.Author = editedBook.Author;
-
-                // Only update the paths if a new image or file has been uploaded.
-                if (newImage != null)
-                    existingBook.BookImagePath = editedBook.BookImagePath;
-
-                if (newFile != null)
-                    existingBook.BookFilePath = editedBook.BookFilePath;
 
                 // Update the existingBook object in the database.
                 bookRepository.Update(id, existingBook);
@@ -181,11 +147,7 @@ namespace BookStore.Controllers
 
                 if (book != null)
                 {
-                    // Get the directory path of the book's files
-                    string bookDirectory = Path.GetDirectoryName(book.BookFilePath);
-
-                    // Delete the directory and its content
-                    delete_directory(bookDirectory);
+                    delete_directory(book.BookFolderPath);
 
                     bookRepository.Delete(id);
                 }
@@ -198,22 +160,57 @@ namespace BookStore.Controllers
             }
         }
 
-
         //=============Methods===============
 
         private void delete_file(string file_path)
         {
-            if (System.IO.File.Exists(file_path))
+            try
             {
-                System.IO.File.Delete(file_path);
+                if (System.IO.File.Exists(file_path))
+                {
+                    System.IO.File.Delete(file_path);
+                }
+            }
+            catch (IOException ioEx)
+            {
+                // Log or handle the specific IO exception
+                Console.WriteLine($"IO Error: {ioEx.Message}");
+            }
+            catch (UnauthorizedAccessException uaEx)
+            {
+                // Log or handle the unauthorized access exception
+                Console.WriteLine($"Access Error: {uaEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Log or handle any generic exception
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
-        private void delete_directory(string directory_path)
+        private void delete_directory(string? directory_path)
         {
-            if (Directory.Exists(directory_path))
+            try
             {
-                Directory.Delete(directory_path, true);  // true means it will delete subdirectories and files
+                if (Directory.Exists(directory_path))
+                {
+                    Directory.Delete(directory_path, true);  // true means it will delete subdirectories and files
+                }
+            }
+            catch (IOException ioEx)
+            {
+                // Log or handle the specific IO exception
+                Console.WriteLine($"IO Error: {ioEx.Message}");
+            }
+            catch (UnauthorizedAccessException uaEx)
+            {
+                // Log or handle the unauthorized access exception
+                Console.WriteLine($"Access Error: {uaEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Log or handle any generic exception
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
@@ -238,26 +235,24 @@ namespace BookStore.Controllers
         private string CreateBookDirectory(string bookTitle)
         {
             var bookFolder = Path.Combine("uploads", bookTitle);
-            Directory.CreateDirectory(Path.Combine(_webHostEnvironment.WebRootPath, bookFolder));
+            Directory.CreateDirectory(Path.Combine(Hosting.WebRootPath, bookFolder));
             return bookFolder;
         }
 
         // This method is used to upload the book file and book image and give them uniqe names
-        private async Task<string> UploadFile(IFormFile file, string parentFolder, string subFolder)
+        private async Task<string> UploadFile(IFormFile file, string parentFolder)
         {
             if (file != null && file.Length > 0)
             {
                 string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName); // use GUID to name the file
-                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, parentFolder, subFolder, fileName);
-
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath)); // ensure directory exists
+                var filePath = Path.Combine(Hosting.WebRootPath, parentFolder, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                return $"/{parentFolder}/{subFolder}/{fileName}";
+                return $"/{parentFolder}/{fileName}";
             }
 
             return null;

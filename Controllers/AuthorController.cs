@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookStore.Controllers
 {
-
     public class AuthorController : Controller
     {
         // depndency injection (dependency inversion principle)
@@ -53,7 +52,7 @@ namespace BookStore.Controllers
 
         // GET: AuthorController/Edit/5
         public ActionResult Edit(int id)
-        {  
+        {
             var author = autohrRepository.Find(id); // Get the author with the specified ID
             return View(author);
         }
@@ -65,7 +64,6 @@ namespace BookStore.Controllers
         {
             try
             {
-
                 autohrRepository.Update(id, author);
 
                 return RedirectToAction(nameof(Index));
@@ -87,15 +85,13 @@ namespace BookStore.Controllers
             return View(author); // Pass the author to the view
         }
 
-
         // POST: AuthorController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id,Author author)
+        public ActionResult Delete(int id, Author author)
         {
             try
             {
-
                 autohrRepository.Delete(id);
                 return RedirectToAction(nameof(Index));
             }

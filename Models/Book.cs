@@ -13,16 +13,16 @@ namespace BookStore.Models
 
         public string? Description { get; set; }
 
-        [NotMapped]
         public IFormFile? BookImage { get; set; }
 
-        [NotMapped]
         public IFormFile? BookFile { get; set; }
 
         public string? BookImagePath { get; set; }
 
         public string? BookFilePath { get; set; }
 
-        public Author Author { get; set; }
+        public string? BookFolderPath { get; set; }
+
+        public Author? Author { get; set; }
     }
 }
