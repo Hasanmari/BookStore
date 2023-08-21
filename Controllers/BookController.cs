@@ -10,14 +10,18 @@ namespace BookStore.Controllers
     public class BookController : Controller
     {
         //depndency injection (dependency inversion principle)
+
         private readonly IBookStoreRepository<Book> bookRepository;
 
         private readonly IBookStoreRepository<Author> autohrRepository;
 
-        public BookController(IBookStoreRepository<Book> bookRepository, IBookStoreRepository<Author> autohrRepository)
+        private readonly IWebHostEnvironment _webHostEnvironment;
+
+        public BookController(IBookStoreRepository<Book> bookRepository, IBookStoreRepository<Author> autohrRepository, IWebHostEnvironment webHostEnvironment)
         {
             this.bookRepository = bookRepository;
             this.autohrRepository = autohrRepository;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: BookController
@@ -200,6 +204,22 @@ namespace BookStore.Controllers
 
         //=============Methods===============
 
+        private void delete_file(string file_path)
+        {
+            if (System.IO.File.Exists(file_path))
+            {
+                System.IO.File.Delete(file_path);
+            }
+        }
+
+        private void delete_directory(string directory_path)
+        {
+            if (Directory.Exists(directory_path))
+            {
+                Directory.Delete(directory_path, true);  // true means it will delete subdirectories and files
+            }
+        }
+
         // This method is used to populate the authors dropdown list
         private List<Author> AuthorsDropdownList()
         {
@@ -221,7 +241,7 @@ namespace BookStore.Controllers
         private string CreateBookDirectory(string bookTitle)
         {
             var bookFolder = Path.Combine("uploads", bookTitle);
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", bookFolder));
+            Directory.CreateDirectory(Path.Combine(_webHostEnvironment.WebRootPath, bookFolder));
             return bookFolder;
         }
 
@@ -231,7 +251,7 @@ namespace BookStore.Controllers
             if (file != null && file.Length > 0)
             {
                 string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName); // use GUID to name the file
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", parentFolder, subFolder, fileName);
+                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, parentFolder, subFolder, fileName);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath)); // ensure directory exists
 
