@@ -118,8 +118,7 @@ namespace BookStore.Controllers
                 // Handle new image upload
                 if (newImage != null)
                 {
-                    // Delete the old image
-                    System.IO.File.Delete(existingBook.BookImagePath);
+                    delete_file(existingBook.BookImagePath);
 
                     // Upload the new image and update the BookImagePath property
                     string bookFolder = Path.GetDirectoryName(existingBook.BookImagePath);
@@ -129,8 +128,7 @@ namespace BookStore.Controllers
                 // Handle new file upload
                 if (newFile != null)
                 {
-                    // Delete the old file
-                    System.IO.File.Delete(existingBook.BookFilePath);
+                    delete_file(existingBook.BookFilePath);
 
                     // Upload the new file and update the BookFilePath property
                     string bookFolder = Path.GetDirectoryName(existingBook.BookFilePath);
@@ -171,6 +169,7 @@ namespace BookStore.Controllers
             return View(book);
         }
 
+        // POST: BookController/Delete/5
         [HttpPost]
         [Route("Book/Delete/{id}")]
         [ValidateAntiForgeryToken]
@@ -186,10 +185,7 @@ namespace BookStore.Controllers
                     string bookDirectory = Path.GetDirectoryName(book.BookFilePath);
 
                     // Delete the directory and its content
-                    if (Directory.Exists(bookDirectory))
-                    {
-                        Directory.Delete(bookDirectory, true);  // The second parameter (true) means it will delete subdirectories and files
-                    }
+                    delete_directory(bookDirectory);
 
                     bookRepository.Delete(id);
                 }
@@ -201,6 +197,7 @@ namespace BookStore.Controllers
                 return View();
             }
         }
+
 
         //=============Methods===============
 
