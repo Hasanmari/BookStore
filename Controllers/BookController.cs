@@ -107,13 +107,23 @@ namespace BookStore.Controllers
                 }
 
                 // Handle new image upload
+                if (editedBook.BookImage != null)
+                {
+                    delete_file(file_path: existingBook.BookImagePath);
+                    existingBook.BookImagePath = UploadFile(editedBook.BookImage, existingBook.BookFolderPath).Result;
+                }
+
+                // Handle new file upload
+                if (editedBook.BookFile != null)
+                {
+                    delete_file(existingBook.BookFilePath);
+                    existingBook.BookFilePath = UploadFile(editedBook.BookFile, existingBook.BookFolderPath).Result;
+                }
 
                 existingBook.Title = editedBook.Title;
                 existingBook.Description = editedBook.Description;
                 existingBook.Author = editedBook.Author;
 
-                // Update the existingBook object in the database.
-                bookRepository.Update(id, existingBook);
                 return RedirectToAction(nameof(Index));
             }
             catch
@@ -166,9 +176,10 @@ namespace BookStore.Controllers
         {
             try
             {
-                if (System.IO.File.Exists(file_path))
+                string absolutePath = Path.Combine(Hosting.WebRootPath, file_path.TrimStart('/')); // Convert to absolute path
+                if (System.IO.File.Exists(absolutePath))
                 {
-                    System.IO.File.Delete(file_path);
+                    System.IO.File.Delete(absolutePath);
                 }
             }
             catch (IOException ioEx)
@@ -192,10 +203,12 @@ namespace BookStore.Controllers
         {
             try
             {
-                if (Directory.Exists(directory_path))
-                {
-                    Directory.Delete(directory_path, true);  // true means it will delete subdirectories and files
-                }
+                if (directory_path == null)
+                    return;
+
+                string absolutePath = Path.Combine(Hosting.WebRootPath, directory_path.TrimStart('/')); // Convert to absolute path
+
+                Directory.Delete(absolutePath, true);  // true means it will delete subdirectories and files
             }
             catch (IOException ioEx)
             {
