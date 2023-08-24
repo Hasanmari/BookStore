@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace BookStore.Controllers
 {
@@ -120,9 +121,18 @@ namespace BookStore.Controllers
                     existingBook.BookFilePath = UploadFile(editedBook.BookFile, existingBook.BookFolderPath).Result;
                 }
 
+                // Handle author selection
+                if (editedBook.Author != null && editedBook.Author.Id > 0)
+                {
+                    var author = autohrRepository.Find(editedBook.Author.Id);
+                    existingBook.Author.FullName = author.FullName;
+                }
+
+                // Update the properties of existingBook
                 existingBook.Title = editedBook.Title;
                 existingBook.Description = editedBook.Description;
-                existingBook.Author = editedBook.Author;
+
+                bookRepository.Update(id, existingBook); // Update using the existingBook object
 
                 return RedirectToAction(nameof(Index));
             }
@@ -247,8 +257,18 @@ namespace BookStore.Controllers
         // This method is used to create a directory for the book
         private string CreateBookDirectory(string bookTitle)
         {
-            var bookFolder = Path.Combine("uploads", bookTitle);
-            Directory.CreateDirectory(Path.Combine(Hosting.WebRootPath, bookFolder));
+            // Sanitize the bookTitle to avoid invalid characters
+            var sanitizedTitle = Regex.Replace(bookTitle, @"[^a-zA-Z0-9_]", "_"); // Replacing special characters with underscores
+
+            var bookFolder = Path.Combine("uploads", sanitizedTitle);
+            var fullPath = Path.Combine(Hosting.WebRootPath, bookFolder);
+
+            // Ensure directory is created
+            if (!Directory.Exists(fullPath))
+            {
+                Directory.CreateDirectory(fullPath);
+            }
+
             return bookFolder;
         }
 
