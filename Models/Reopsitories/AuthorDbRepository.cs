@@ -1,6 +1,6 @@
 ﻿namespace BookStore.Models.Reopsitories
 {
-    public class AuthorDbRepository
+    public class AuthorDbRepository : IBookStoreRepository<Author>
     {
         private readonly BookStoreDbContext DB;
 

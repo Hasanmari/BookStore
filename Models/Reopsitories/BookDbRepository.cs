@@ -1,6 +1,9 @@
-﻿namespace BookStore.Models.Reopsitories
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace BookStore.Models.Reopsitories
 {
-    public class BookDbRepository
+    public class BookDbRepository : IBookStoreRepository<Book>
+
     {
         private readonly BookStoreDbContext DB;
 
@@ -24,13 +27,13 @@
 
         public Book Find(int id)
         {
-            var book = DB.Books.SingleOrDefault(b => b.Id == id);
+            var book = DB.Books.Include(a => a.Author).SingleOrDefault(b => b.Id == id);
             return book;
         }
 
         public IList<Book> List()
         {
-            return DB.Books.ToList();
+            return DB.Books.Include(a => a.Author).ToList();
         }
 
         public void Update(int id, Book newBook)

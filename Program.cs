@@ -18,8 +18,8 @@ namespace BookStore
             });
 
             // the  services
-            builder.Services.AddSingleton<IBookStoreRepository<Author>, AuthorRepository>();
-            builder.Services.AddSingleton<IBookStoreRepository<Book>, BookRepository>();
+            builder.Services.AddScoped<IBookStoreRepository<Author>, AuthorDbRepository>();
+            builder.Services.AddScoped<IBookStoreRepository<Book>, BookDbRepository>();
             builder.Services.AddDbContext<BookStoreDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("SqlCon"));
