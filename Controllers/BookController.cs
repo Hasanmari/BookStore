@@ -13,12 +13,10 @@ namespace BookStore.Controllers
         //depndency injection (dependency inversion principle)
 
         private readonly IBookStoreRepository<Book> bookRepository;
-
-        private readonly IBookStoreRepository<Author> autohrRepository;
-
         private readonly IWebHostEnvironment Hosting;
+        private readonly AuthorDbRepository autohrRepository;
 
-        public BookController(IBookStoreRepository<Book> bookRepository, IBookStoreRepository<Author> autohrRepository, IWebHostEnvironment Hosting)
+        public BookController(IBookStoreRepository<Book> bookRepository, AuthorDbRepository autohrRepository, IWebHostEnvironment Hosting)
         {
             this.bookRepository = bookRepository;
             this.autohrRepository = autohrRepository;

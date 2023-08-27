@@ -20,6 +20,7 @@ namespace BookStore
             // the  services
             builder.Services.AddScoped<IBookStoreRepository<Author>, AuthorDbRepository>();
             builder.Services.AddScoped<IBookStoreRepository<Book>, BookDbRepository>();
+            builder.Services.AddScoped<AuthorDbRepository>();
             builder.Services.AddDbContext<BookStoreDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("SqlCon"));
