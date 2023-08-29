@@ -1,33 +1,10 @@
-﻿namespace BookStore.Models.Reopsitories
+﻿using System.Linq.Expressions;
+
+namespace BookStore.Models.Reopsitories
 {
     public class BookRepository : IBookStoreRepository<Book>
     {
         private List<Book> books;
-
-        public BookRepository()
-        {
-            books = new List<Book>()
-            {
-                new Book
-                {
-                    Id = 1,
-                    Title = "C# Programming",
-                    Description = "No Description",
-                },
-                new Book
-                {
-                    Id = 2,
-                    Title = "Java Programming",
-                    Description = "Nothing",
-                },
-                new Book
-                {
-                    Id = 3,
-                    Title = "Python Programming",
-                    Description = "No Description",
-                }
-            };
-        }
 
         public void Add(Book entity)
         {
@@ -49,6 +26,14 @@
         public IList<Book> List()
         {
             return books;
+        }
+
+        public IList<Book> Search(string term)
+        {
+            var result = books.Where(b => b.Title.Contains(term)
+            || b.Description.Contains(term)
+            || b.Author.FullName.Contains(term)).ToList();
+            return result;
         }
 
         public void Update(int id, Book NewBook)

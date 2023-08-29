@@ -33,6 +33,12 @@
             return DB.Authors.ToList();
         }
 
+        public IList<Author> Search(string term)
+        {
+            var result = DB.Authors.Where(a => a.FullName.Contains(term)).ToList();
+            return result;
+        }
+
         public void Update(int id, Author newAuthor)
         {
             DB.Update(newAuthor);

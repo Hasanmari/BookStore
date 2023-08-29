@@ -30,6 +30,13 @@ namespace BookStore.Controllers
             return View(books);
         }
 
+        //GET: BookController/Search
+        public ActionResult Search(string term)
+        {
+            var result = bookRepository.Search(term);
+            return View("Index", result);
+        }
+
         // GET: BookController/Details/5
         public ActionResult Details(int id)
         {

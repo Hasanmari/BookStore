@@ -36,6 +36,15 @@ namespace BookStore.Models.Reopsitories
             return DB.Books.Include(a => a.Author).ToList();
         }
 
+        public IList<Book> Search(string term)
+        {
+            var result = DB.Books.Include(a => a.Author)
+             .Where(b => b.Title.Contains(term)
+                        || b.Description.Contains(term)
+                                   || b.Author.FullName.Contains(term)).ToList();
+            return result;
+        }
+
         public void Update(int id, Book newBook)
         {
             DB.Update(newBook);
