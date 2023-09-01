@@ -9,7 +9,6 @@ namespace BookStore.ViewModels
         public string? BookDescription { get; set; }
         public int AuthorId { get; set; }
 
-        public List<Author> Authors { get; set; }
-
+        public List<Author>? Authors { get; set; }
     }
 }

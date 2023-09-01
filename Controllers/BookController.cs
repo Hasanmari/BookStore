@@ -2,8 +2,6 @@
 using BookStore.Models.Reopsitories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Http;
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace BookStore.Controllers
@@ -60,7 +58,7 @@ namespace BookStore.Controllers
 
             if (ModelState.IsValid)
             {
-                book.BookFolderPath = CreateBookDirectory(book.Title);
+                book.BookFolderPath = CreateBookDirectory(bookTitle: book.Title);
                 book.BookFilePath = await UploadFile(book.BookFile, book.BookFolderPath);
                 book.BookImagePath = await UploadFile(book.BookImage, book.BookFolderPath);
 
@@ -243,7 +241,7 @@ namespace BookStore.Controllers
         }
 
         // This method is used to populate the authors dropdown list
-        private List<Author> AuthorsDropdownList()
+        private List<Author>? AuthorsDropdownList()
         {
             var authors = autohrRepository.List().ToList();
             authors.Insert(0, new Author { Id = -1, FullName = "---Please Select Author---" });
