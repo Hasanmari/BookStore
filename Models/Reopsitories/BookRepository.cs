@@ -4,7 +4,7 @@ namespace BookStore.Models.Reopsitories
 {
     public class BookRepository : IBookStoreRepository<Book>
     {
-        private List<Book>? books;
+        private readonly List<Book> books;
 
         public void Add(Book entity)
         {

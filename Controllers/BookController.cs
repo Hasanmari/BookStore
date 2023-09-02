@@ -58,7 +58,10 @@ namespace BookStore.Controllers
 
             if (ModelState.IsValid)
             {
-                book.BookFolderPath = CreateBookDirectory(bookTitle: book.Title);
+                if (!string.IsNullOrEmpty(book.Title))
+                {
+                    book.BookFolderPath = CreateBookDirectory(bookTitle: book.Title);
+                }
                 book.BookFilePath = await UploadFile(book.BookFile, book.BookFolderPath);
                 book.BookImagePath = await UploadFile(book.BookImage, book.BookFolderPath);
 
@@ -261,8 +264,7 @@ namespace BookStore.Controllers
         private string CreateBookDirectory(string bookTitle)
         {
             // Sanitize the bookTitle to avoid invalid characters
-            var sanitizedTitle = Regex.Replace(bookTitle, @"[^a-zA-Z0-9_]", "_"); // Replacing special characters with underscores
-
+            var sanitizedTitle = bookTitle != null ? Regex.Replace(bookTitle, @"[^a-zA-Z0-9_]", "_") : "Untitled"; // Replacing special characters with underscores
             var bookFolder = Path.Combine("uploads", sanitizedTitle);
             var fullPath = Path.Combine(Hosting.WebRootPath, bookFolder);
 
@@ -271,7 +273,6 @@ namespace BookStore.Controllers
             {
                 Directory.CreateDirectory(fullPath);
             }
-
             return bookFolder;
         }
 

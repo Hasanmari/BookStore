@@ -4,29 +4,6 @@
     {
         private List<Author> authors;
 
-        //constroctor to initialize the list of authors
-        public AuthorRepository()
-        {
-            authors = new List<Author>()
-            {
-                new Author
-                {
-                    Id = 1,
-                    FullName = "Ahmed"
-                },
-                new Author
-                {
-                    Id = 2,
-                    FullName = "Mohamed"
-                },
-                new Author
-                {
-                    Id = 3,
-                    FullName = "Ali"
-                }
-            };
-        }
-
         public void Add(Author entity)
         {
             entity.Id = authors.Max(A => A.Id) + 1;
